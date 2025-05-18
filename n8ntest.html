@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>n8n 自動化 AI 工具</title>
+  <style>
+    body {
+      font-family: "Noto Sans TC", sans-serif;
+      background-color: #e0f0f5;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      background-color: #ffffff;
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 700px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #295f7c;
+    }
+    textarea, input {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 15px;
+      width: 100%;
+      padding: 12px;
+      background-color: #4fa1c1;
+      color: white;
+      font-size: 18px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #3d8ab2;
+    }
+    .section {
+      margin-top: 30px;
+    }
+    .label {
+      font-weight: bold;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📡 AI 問答工具</h1>
+
+    <div class="section">
+      <div class="label">請輸入您的提問：</div>
+      <input type="text" id="userInput" placeholder="請輸入您要查詢的問題，例如：今天台北天氣如何？">
+      <button id="submitBtn">送出</button>
+    </div>
+
+    <div class="section">
+      <div class="label">🧠 AI 回覆內容：</div>
+      <textarea id="outputArea" rows="6" placeholder="AI 回應會顯示在這裡..." readonly></textarea>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("submitBtn").addEventListener("click", function(event) {
+      event.preventDefault();
+
+      const userInput = document.getElementById("userInput").value.trim();
+      const outputArea = document.getElementById("outputArea");
+
+      if (!userInput) {
+        outputArea.value = "❗請先輸入您的問題再送出。";
+        return;
+      }
+
+      outputArea.value = "⏳ AI 正在思考中，請稍候...";
+
+      fetch("https://aiwisebalance.com/webhook/0aa9b929-2388-4703-ac51-e9558cb40651", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          chatInput: userInput,
+          sessionId: "test-user-001"
+        })
+      })
+      .then(async response => {
+        const text = await response.text();
+        try {
+          const data = JSON.parse(text);
+          outputArea.value = data.result || "⚠️ AI 沒有提供內容。";
+        } catch (err) {
+          if (text.trim() === "" || text.includes("<!DOCTYPE html>")) {
+            outputArea.value = "❌ 發生錯誤：n8n 未正確回應 JSON。請確認 Webhook 是否設定 Respond to Webhook，並使用合法 JSON 回傳。\n\n原始回應：\n" + text;
+          } else {
+            outputArea.value = "❌ 回傳內容格式錯誤，請稍後再試。\n原始內容：\n" + text;
+          }
+        }
+      })
+      .catch(error => {
+        outputArea.value = "🚫 發生錯誤，請檢查網路或伺服器連線。\n" + error;
+      });
+    });
+  </script>
+</body>
+</html>
